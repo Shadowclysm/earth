@@ -1,0 +1,165 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;"> 
+	<meta charset="utf-8">
+
+	<script src="js/three.min.js"></script>
+	<script src="js/jquery-1.11.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/earth.css">
+</head>
+
+
+<body>
+
+<script>
+var scene = new THREE.Scene();
+var renderer = new THREE.WebGLRenderer();
+// fov, aspectRatio, closeClipping, farClipping
+var camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 0.1, 1000 );
+camera.position.z = 13;
+
+
+//renderer.setSize(window.innerWidth/2, window.innerHeight/2);
+renderer.setSize(800, 600);
+document.body.appendChild(renderer.domElement);
+
+
+
+var mouseX, mouseY, mouseDX=0, mouseDY=0, mousedown=false;
+renderer.domElement.addEventListener('mousemove', function(e){
+    if(mousedown){
+		mouseDX = e.clientX - mouseX;
+		mouseDY = e.clientY - mouseY;
+	}
+});
+renderer.domElement.addEventListener("mousedown", function(e){
+	mousedown = true;
+	mouseX = e.clientX;
+	mouseY = e.clientY;
+});
+renderer.domElement.addEventListener("mouseup", function(e){
+	mousedown = false;
+	mouseDX = 0;
+	mouseDY = 0;
+});
+
+
+var light = new THREE.DirectionalLight(0xFFFFFF, 1);
+light.position.set(1, 0, 1);
+scene.add(light);
+
+// size is 10^6 meters
+
+var earthGeo = new THREE.SphereGeometry(6.367, 32, 32);
+var earthMat = new THREE.MeshPhongMaterial({
+	map : THREE.ImageUtils.loadTexture("img/earthmap1k.jpg"),
+	bumpMap : THREE.ImageUtils.loadTexture('img/earthbump1k.jpg'),
+	bumpScale : 0.05,
+	specularMap : THREE.ImageUtils.loadTexture('img/earthspec1k.jpg'),
+	specular : new THREE.Color(0x444444),
+});
+
+var earthMesh = new THREE.Mesh(earthGeo, earthMat);
+scene.add(earthMesh);
+
+
+
+
+var cloudGeo = new THREE.SphereGeometry(6.4, 32, 32)
+var cloudMat = new THREE.MeshPhongMaterial({
+// need to make a new img with alpha for this
+  map	: THREE.ImageUtils.loadTexture('img/earthcloudtrans1k.png'),
+  side	: THREE.DoubleSide,
+  opacity	: 0.7,
+  transparent	: true,
+  depthWrite	: false,
+});
+var cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+earthMesh.add(cloudMesh);
+
+
+
+
+var geometry = new THREE.BoxGeometry(13,13,13);
+var material = new THREE.MeshBasicMaterial( {color: 0x123456} );
+material.wireframe=true;
+var cube = new THREE.Mesh(geometry, material);
+
+scene.add(cube);
+
+
+function render() {
+	window.requestAnimationFrame(render);
+	
+	cube.rotation.x += mouseDY*.0001;
+	cube.rotation.y += mouseDX*.0001;
+	earthMesh.rotation.y +=0.001;
+	cloudMesh.rotation.y += 0.0005
+//	cube.rotation.z += 0.01;
+	
+	renderer.render(scene, camera);
+}
+render();
+
+
+
+/*
+
+track x y
+record x y on mousedown
+compute new rotation based on offset
+forget x y on mouseup
+
+*/
+</script>
+<script>
+/*
+var canvasResult = document.createElement('canvas');
+canvasResult.width	= 1024
+canvasResult.height	= 512
+var contextResult = canvasResult.getContext('2d')
+
+// load earthcloudmap
+var imageMap = new Image();
+imageMap.addEventListener("load", function() {
+	// create dataMap ImageData for earthcloudmap
+	var canvasMap = document.createElement('canvas')
+	canvasMap.width	= imageMap.width
+	canvasMap.height= imageMap.height
+	var contextMap = canvasMap.getContext('2d')
+	contextMap.drawImage(imageMap, 0, 0)
+	var dataMap = contextMap.getImageData(0, 0, canvasMap.width, canvasMap.height)
+	// load earthcloudmaptrans
+	var imageTrans = new Image();
+	imageTrans.addEventListener("load", function(){
+		// create dataTrans ImageData for earthcloudmaptrans
+		var canvasTrans = document.createElement('canvas')
+		canvasTrans.width	= imageTrans.width
+		canvasTrans.height	= imageTrans.height
+		var contextTrans = canvasTrans.getContext('2d')
+		contextTrans.drawImage(imageTrans, 0, 0)
+		var dataTrans = contextTrans.getImageData(0, 0, canvasTrans.width, canvasTrans.height)
+		// merge dataMap + dataTrans into dataResult
+		var dataResult = contextMap.createImageData(canvasMap.width, canvasMap.height)
+		for(var y = 0, offset = 0; y < imageMap.height; y++){
+			for(var x = 0; x < imageMap.width; x++, offset += 4){
+				dataResult.data[offset+0] = dataMap.data[offset+0]
+				dataResult.data[offset+1] = dataMap.data[offset+1]
+				dataResult.data[offset+2] = dataMap.data[offset+2]
+				dataResult.data[offset+3] = 255 - dataTrans.data[offset+0]
+			}
+		}
+		// update texture with result
+		contextResult.putImageData(dataResult,0,0)
+		//material.map.needsUpdate = true;
+	})
+	imageTrans.src	= 'img/earthcloudalpha1k.jpg';
+}, false);
+imageMap.src = 'img/earthcloudcolor1k.jpg';
+
+//document.body.appendChild(canvasResult);
+*/
+</script>
+</body>
+</html>
+
